@@ -41,12 +41,20 @@ public class GridManager : MonoBehaviour
             return;
         }
 
-        // Calculate cell size dynamically
-        float screenWidth = Screen.width;
-        float screenHeight = Screen.height;
+        RectTransform rectTransform = cardGrid.GetComponent<RectTransform>();
+        if (rectTransform == null)
+        {
+            Debug.LogError("RectTransform component is missing on cardGrid!");
+            return;
+        }
 
-        float cellWidth = (screenWidth - (gridLayout.spacing.x * (columns - 1))) / columns;
-        float cellHeight = (screenHeight - (gridLayout.spacing.y * (rows - 1))) / rows;
+        // Get the size of the container (the GameObject with GridLayoutGroup)
+        float containerWidth = rectTransform.rect.width;
+        float containerHeight = rectTransform.rect.height;
+
+        // Calculate cell size dynamically
+        float cellWidth = (containerWidth - (gridLayout.spacing.x * (columns - 1))) / columns;
+        float cellHeight = (containerHeight - (gridLayout.spacing.y * (rows - 1))) / rows;
 
         gridLayout.cellSize = new Vector2(cellWidth, cellHeight);
 
