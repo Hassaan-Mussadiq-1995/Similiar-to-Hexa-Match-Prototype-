@@ -11,4 +11,9 @@ public class UIManager : MonoBehaviour
     {
         scoreText.text = "Score: " + GameManager.Instance.score;
     }
+    public void RefreshScore()
+    {
+        scoreText.text = "Score: " + GameManager.Instance.score;
+    }
+
 }

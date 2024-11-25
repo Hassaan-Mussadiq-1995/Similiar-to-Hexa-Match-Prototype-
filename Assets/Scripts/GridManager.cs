@@ -12,12 +12,14 @@ public class GridManager : MonoBehaviour
     private List<Card> cards = new List<Card>(); // List of instantiated cards
     private Card firstCard, secondCard; // To track selected cards
 
+    public float revealDuration = 2.0f;
+
     void Start()
     { 
         GenerateCardIds();
         Shuffle(cardIds);
         CreateCards();
-
+        StartCoroutine(RevealAllCards());
         //// Generate card IDs (pairs for matching)
         //cardIds = new int[cardFronts.Length * 2];
         //for (int i = 0; i < cardFronts.Length; i++)
@@ -38,15 +40,31 @@ public class GridManager : MonoBehaviour
         //}
     }
 
+    IEnumerator RevealAllCards()
+    {
+        yield return new WaitForSeconds(revealDuration); // Wait for the reveal duration
+        foreach (Card card in cards)
+        {
+            card.ResetCard(); // Hide all cards
+        }
+    }
 
     void GenerateCardIds()
     {
-        cardIds = new int[cardFronts.Length * 2];
-        for (int i = 0; i < cardFronts.Length; i++)
+        int totalCards = cardFronts.Length * 2;
+        cardIds = new int[totalCards];
+        for (int i = 0; i < totalCards / 2; i++)
         {
             cardIds[i * 2] = i;
             cardIds[i * 2 + 1] = i;
         }
+
+        //cardIds = new int[cardFronts.Length * 2];
+        //for (int i = 0; i < cardFronts.Length; i++)
+        //{
+        //    cardIds[i * 2] = i;
+        //    cardIds[i * 2 + 1] = i;
+        //}
     }
 
     // Create cards and assign properties
@@ -59,10 +77,11 @@ public class GridManager : MonoBehaviour
             card.cardId = cardIds[i];
             card.frontSprite = cardFronts[cardIds[i]];
             card.backSprite = cardBackSprite;
-            card.ResetCard(); // Initialize with the back sprite
+            card.FlipCardWithoutInteraction(); // Initially show the front
             cards.Add(card);
         }
     }
+
 
     void Shuffle(int[] array)
     {
@@ -75,6 +94,7 @@ public class GridManager : MonoBehaviour
             array[i] = temp;
         }
     }
+
 
     public void CheckForMatch(Card selectedCard)
     {
@@ -103,5 +123,36 @@ public class GridManager : MonoBehaviour
         firstCard.ResetCard();
         secondCard.ResetCard();
         firstCard = secondCard = null;
+    }
+
+    public List<CardState> GetCardStates()
+    {
+        List<CardState> states = new List<CardState>();
+        foreach (Card card in cards)
+        {
+            states.Add(new CardState
+            {
+                cardId = card.cardId,
+                isFlipped = card.IsFlipped()
+            });
+        }
+        return states;
+    }
+
+    // Set card states from loaded data
+    public void SetCardStates(List<CardState> states)
+    {
+        for (int i = 0; i < states.Count; i++)
+        {
+            Card card = cards[i];
+            if (states[i].isFlipped)
+            {
+                card.FlipCardWithoutInteraction(); // Implement a method to flip the card visually without triggering interaction
+            }
+            else
+            {
+                card.ResetCard();
+            }
+        }
     }
 }

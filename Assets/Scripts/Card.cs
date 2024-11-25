@@ -13,11 +13,12 @@ public class Card : MonoBehaviour
     private bool isFlipped = false;
     public Animator animator;
 
+
     private void Start()
     {
         //animator = GetComponent<Animator>();
         imageComponent = GetComponent<Image>();
-        ResetCard();
+        //ResetCard();
         Button button = GetComponent<Button>();
         if (button != null)
         {
@@ -47,5 +48,14 @@ public class Card : MonoBehaviour
         isFlipped = false;
         animator.SetTrigger("Reset");
         imageComponent.sprite = backSprite;
+    }
+    public void FlipCardWithoutInteraction()
+    {
+        isFlipped = true;
+        imageComponent.sprite = frontSprite;
+    }
+    public bool IsFlipped()
+    {
+        return isFlipped;
     }
 }

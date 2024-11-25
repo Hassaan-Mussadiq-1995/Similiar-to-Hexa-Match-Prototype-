@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using System.IO;
 
 public class GameManager : MonoBehaviour
@@ -29,27 +27,20 @@ public class GameManager : MonoBehaviour
         score += points;
     }
 
-    public void SaveProgress()
+    public void SaveGame(List<CardState> cardStates)
     {
-        PlayerPrefs.SetInt("Score", score);
-    }
-
-    public void LoadProgress()
-    {
-        if (PlayerPrefs.HasKey("Score"))
+        SaveData saveData = new SaveData
         {
-            score = PlayerPrefs.GetInt("Score");
-        }
-    }
+            score = score,
+            cardStates = cardStates
+        };
 
-    public void SaveGame()
-    {
-        SaveData saveData = new SaveData { score = score };
-        string json = JsonUtility.ToJson(saveData);
+        string json = JsonUtility.ToJson(saveData, true);
         File.WriteAllText(Application.persistentDataPath + "/" + saveFileName, json);
+        Debug.Log("Game Saved!");
     }
 
-    public void LoadGame()
+    public SaveData LoadGame()
     {
         string path = Application.persistentDataPath + "/" + saveFileName;
         if (File.Exists(path))
@@ -57,7 +48,12 @@ public class GameManager : MonoBehaviour
             string json = File.ReadAllText(path);
             SaveData saveData = JsonUtility.FromJson<SaveData>(json);
             score = saveData.score;
+            Debug.Log("Game Loaded!");
+            return saveData;
         }
+
+        Debug.LogWarning("No Save File Found!");
+        return null;
     }
 }
 
@@ -65,4 +61,12 @@ public class GameManager : MonoBehaviour
 public class SaveData
 {
     public int score;
+    public List<CardState> cardStates;
+}
+
+[System.Serializable]
+public class CardState
+{
+    public int cardId;
+    public bool isFlipped;
 }
