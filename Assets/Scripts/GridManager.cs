@@ -138,6 +138,7 @@ public class GridManager : MonoBehaviour
         if (firstCard.cardId == secondCard.cardId)
         {
             Debug.Log("Match!");
+            firstCard.GetComponent<Image>().enabled = secondCard.GetComponent<Image>().enabled = false;
             firstCard = secondCard = null; // Clear the selection
         }
         else
