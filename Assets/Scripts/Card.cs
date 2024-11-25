@@ -34,6 +34,7 @@ public class Card : MonoBehaviour
     public void FlipCard()
     {
         if (isFlipped) return;
+        if (FindObjectOfType<GridManager>().IsResolving()) return; // Prevent flipping during resolution
 
         isFlipped = true;
         animator.SetTrigger("Flip");

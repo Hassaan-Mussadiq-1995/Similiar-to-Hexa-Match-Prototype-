@@ -18,6 +18,44 @@ public class GridManager : MonoBehaviour
 
     public int rows = 4; // Number of rows in the grid
     public int columns = 5; // Number of columns in the grid
+    private bool isResolving = false; // Flag to prevent interactions during resolution
+
+    public bool IsResolving()
+    {
+        return isResolving;
+    }
+
+    private void Update()
+    {
+        HandleTouchInput();
+    }
+
+    private void HandleTouchInput()
+    {
+        // Check if there are any touches
+        if (Input.touchCount > 0)
+        {
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                Touch touch = Input.GetTouch(i);
+
+                if (touch.phase == TouchPhase.Began)
+                {
+                    Ray ray = Camera.main.ScreenPointToRay(touch.position);
+                    RaycastHit hit;
+
+                    if (Physics.Raycast(ray, out hit))
+                    {
+                        Card touchedCard = hit.collider.GetComponent<Card>();
+                        if (touchedCard != null && !touchedCard.IsFlipped())
+                        {
+                            touchedCard.FlipCard();
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     void Start()
     {
@@ -126,6 +164,9 @@ public class GridManager : MonoBehaviour
 
     public void CheckForMatch(Card selectedCard)
     {
+        if (isResolving) return; // Prevent interactions if resolving a match
+
+
         if (firstCard == null)
         {
             firstCard = selectedCard;
@@ -133,13 +174,15 @@ public class GridManager : MonoBehaviour
         }
 
         secondCard = selectedCard;
-
+        isResolving = true;
         // Check if IDs match
         if (firstCard.cardId == secondCard.cardId)
         {
             Debug.Log("Match!");
-            firstCard.GetComponent<Image>().enabled = secondCard.GetComponent<Image>().enabled = false;
-            firstCard = secondCard = null; // Clear the selection
+            StartCoroutine(WaitToHideCards(firstCard.GetComponent<Image>(), secondCard.GetComponent<Image>()));
+
+            ClearCards();
+            isResolving = false;
         }
         else
         {
@@ -147,12 +190,28 @@ public class GridManager : MonoBehaviour
             Invoke("ResetCards", 1f); // Delay before flipping back
         }
     }
+
+    IEnumerator WaitToHideCards(Image FirstCardImage,Image SecondCardImage)
+    {
+        Image a = FirstCardImage;
+        Image b = SecondCardImage;
+        yield return new WaitForSecondsRealtime(1f);
+        a.enabled = b.enabled = false;
+    }
     private void ResetCards()
     {
         firstCard.ResetCard();
         secondCard.ResetCard();
-        firstCard = secondCard = null;
+        ClearCards();
+        isResolving = false; // Allow interactions again
     }
+
+    private void ClearCards()
+    {
+        firstCard = null;
+        secondCard = null;
+    }
+
 
     public List<CardState> GetCardStates()
     {
