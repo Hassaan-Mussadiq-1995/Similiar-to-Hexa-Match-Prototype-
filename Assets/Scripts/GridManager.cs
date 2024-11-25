@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class GridManager : MonoBehaviour
 {
@@ -14,44 +16,52 @@ public class GridManager : MonoBehaviour
 
     public float revealDuration = 2.0f;
 
+    public int rows = 4; // Number of rows in the grid
+    public int columns = 5; // Number of columns in the grid
+
     void Start()
-    { 
+    {
+        SetupGridLayout(); // Adjust the grid layout
         GenerateCardIds();
         Shuffle(cardIds);
         CreateCards();
         StartCoroutine(RevealAllCards());
-        //// Generate card IDs (pairs for matching)
-        //cardIds = new int[cardFronts.Length * 2];
-        //for (int i = 0; i < cardFronts.Length; i++)
-        //{
-        //    cardIds[i * 2] = i;
-        //    cardIds[i * 2 + 1] = i;
-        //}
-
-        //// Shuffle IDs
-        //Shuffle(cardIds);
-
-        //// Create cards
-        //for (int i = 0; i < cardIds.Length; i++)
-        //{
-        //    GameObject card = Instantiate(cardPrefab, transform);
-        //    card.GetComponent<Card>().cardId = cardIds[i];
-        //    card.transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = cardFronts[cardIds[i]];
-        //}
+       
     }
 
-    IEnumerator RevealAllCards()
+
+
+    // Adjust the Grid Layout based on rows, columns, and screen size
+    void SetupGridLayout()
     {
-        yield return new WaitForSeconds(revealDuration); // Wait for the reveal duration
-        foreach (Card card in cards)
+        GridLayoutGroup gridLayout = cardGrid.GetComponent<GridLayoutGroup>();
+        if (gridLayout == null)
         {
-            card.ResetCard(); // Hide all cards
+            Debug.LogError("GridLayoutGroup component is missing on cardGrid!");
+            return;
         }
+
+        // Calculate cell size dynamically
+        float screenWidth = Screen.width;
+        float screenHeight = Screen.height;
+
+        float cellWidth = (screenWidth - (gridLayout.spacing.x * (columns - 1))) / columns;
+        float cellHeight = (screenHeight - (gridLayout.spacing.y * (rows - 1))) / rows;
+
+        gridLayout.cellSize = new Vector2(cellWidth, cellHeight);
+
+        Debug.Log($"Grid Layout: Rows = {rows}, Columns = {columns}, Cell Size = {gridLayout.cellSize}");
     }
+
 
     void GenerateCardIds()
     {
-        int totalCards = cardFronts.Length * 2;
+        int totalCards = rows * columns;
+        if (totalCards > cardFronts.Length * 2)
+        {
+            Debug.LogError("Not enough card front sprites to generate unique pairs for the grid size!");
+            return;
+        }
         cardIds = new int[totalCards];
         for (int i = 0; i < totalCards / 2; i++)
         {
@@ -65,6 +75,20 @@ public class GridManager : MonoBehaviour
         //    cardIds[i * 2] = i;
         //    cardIds[i * 2 + 1] = i;
         //}
+    }
+
+
+    // Shuffle the card IDs for randomness
+    void Shuffle(int[] array)
+    {
+       
+        for (int i = array.Length - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+            int temp = array[randomIndex];
+            array[randomIndex] = array[i];
+            array[i] = temp;
+        }
     }
 
     // Create cards and assign properties
@@ -83,18 +107,14 @@ public class GridManager : MonoBehaviour
     }
 
 
-    void Shuffle(int[] array)
+    IEnumerator RevealAllCards()
     {
-       
-        for (int i = array.Length - 1; i > 0; i--)
+        yield return new WaitForSeconds(revealDuration); // Wait for the reveal duration
+        foreach (Card card in cards)
         {
-            int randomIndex = Random.Range(0, i + 1);
-            int temp = array[randomIndex];
-            array[randomIndex] = array[i];
-            array[i] = temp;
+            card.ResetCard(); // Hide all cards
         }
     }
-
 
     public void CheckForMatch(Card selectedCard)
     {
