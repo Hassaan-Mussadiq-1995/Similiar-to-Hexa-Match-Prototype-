@@ -19,6 +19,7 @@ public class GridManager : MonoBehaviour
     public int rows = 4; // Number of rows in the grid
     public int columns = 5; // Number of columns in the grid
     private bool isResolving = false; // Flag to prevent interactions during resolution
+    private int remainingMatches; // Number of remaining card pairs to match
 
     public bool IsResolving()
     {
@@ -59,15 +60,19 @@ public class GridManager : MonoBehaviour
 
     void Start()
     {
-        SetupGridLayout(); // Adjust the grid layout
+        SetupLevel();
+    }
+
+    // Setup the initial or next level
+    void SetupLevel()
+    {
+        remainingMatches = (rows * columns) / 2; // Calculate the number of pairs
+        SetupGridLayout();
         GenerateCardIds();
         Shuffle(cardIds);
         CreateCards();
         StartCoroutine(RevealAllCards());
-       
     }
-
-
 
     // Adjust the Grid Layout based on rows, columns, and screen size
     void SetupGridLayout()
@@ -114,13 +119,6 @@ public class GridManager : MonoBehaviour
             cardIds[i * 2] = i;
             cardIds[i * 2 + 1] = i;
         }
-
-        //cardIds = new int[cardFronts.Length * 2];
-        //for (int i = 0; i < cardFronts.Length; i++)
-        //{
-        //    cardIds[i * 2] = i;
-        //    cardIds[i * 2 + 1] = i;
-        //}
     }
 
 
@@ -140,16 +138,20 @@ public class GridManager : MonoBehaviour
     // Create cards and assign properties
     void CreateCards()
     {
-        for (int i = 0; i < cardIds.Length; i++)
+        cards.Clear(); // Clear the card list
+
+        foreach (int cardId in cardIds)
         {
             GameObject cardObj = Instantiate(cardPrefab, cardGrid);
             Card card = cardObj.GetComponent<Card>();
-            card.cardId = cardIds[i];
-            card.frontSprite = cardFronts[cardIds[i]];
+            card.cardId = cardId;
+            card.frontSprite = cardFronts[cardId];
             card.backSprite = cardBackSprite;
-            card.FlipCardWithoutInteraction(); // Initially show the front
+            card.GetComponent<Image>().sprite= cardFronts[cardId];
+
             cards.Add(card);
         }
+
     }
 
 
@@ -179,10 +181,7 @@ public class GridManager : MonoBehaviour
         if (firstCard.cardId == secondCard.cardId)
         {
             Debug.Log("Match!");
-            StartCoroutine(WaitToHideCards(firstCard.GetComponent<Image>(), secondCard.GetComponent<Image>()));
-
-            ClearCards();
-            isResolving = false;
+            StartCoroutine(WaitToHideCards(firstCard, secondCard));
         }
         else
         {
@@ -191,12 +190,22 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    IEnumerator WaitToHideCards(Image FirstCardImage,Image SecondCardImage)
+    IEnumerator WaitToHideCards(Card FirstCard,Card SecondCard)
     {
-        Image a = FirstCardImage;
-        Image b = SecondCardImage;
+       
         yield return new WaitForSecondsRealtime(1f);
-        a.enabled = b.enabled = false;
+        FirstCard.GetComponent<Image>().enabled = SecondCard.GetComponent<Image>().enabled = false;
+        ClearCards();
+        isResolving = false;
+
+        remainingMatches--;
+
+        if (remainingMatches <= 0)
+        {
+            Debug.Log("All matches complete! Loading next level...");
+            StartCoroutine(NextLevel());
+        }
+
     }
     private void ResetCards()
     {
@@ -212,6 +221,19 @@ public class GridManager : MonoBehaviour
         secondCard = null;
     }
 
+
+    IEnumerator NextLevel()
+    {
+        yield return new WaitForSeconds(1f);
+        foreach (Transform child in cardGrid)
+        {
+            Destroy(child.gameObject); // Clear current grid
+        }
+
+        rows = Random.Range(3, 6); // Random rows between 3 and 5
+        columns = Random.Range(4, 7); // Random columns between 4 and 6
+        SetupLevel(); // Start the next level
+    }
 
     public List<CardState> GetCardStates()
     {
